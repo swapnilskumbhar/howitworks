@@ -1,0 +1,449 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #0b0c10;
+  --panel: rgba(19, 21, 27, 0.78);
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #e8eaf0;
+  --muted: #8b90a0;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+code {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+/* ================= home ================= */
+
+.home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+}
+
+.home-hero {
+  text-align: center;
+  padding: 16vh 0 8vh;
+}
+
+#home-title {
+  font-size: clamp(42px, 8vw, 88px);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+#home-title .ch {
+  display: inline-block;
+  opacity: 0;
+}
+
+#home-title .ch:nth-child(4),
+#home-title .ch:nth-child(5) {
+  color: #6ea8ff;
+}
+
+.home-tag {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: clamp(14px, 2vw, 17px);
+  letter-spacing: 0.04em;
+  opacity: 0;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+  justify-content: center;
+  gap: 22px;
+  padding-bottom: 10vh;
+}
+
+.ex-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  text-decoration: none;
+  color: var(--text);
+  opacity: 0;
+  transition: border-color 0.25s;
+}
+
+.ex-card:hover {
+  border-color: var(--accent);
+}
+
+.ex-kicker {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ex-card h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.ex-card p {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--muted);
+  flex: 1;
+}
+
+.ex-steps {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.home-foot {
+  text-align: center;
+  padding: 24px 0 32px;
+  color: var(--muted);
+  font-size: 13px;
+  opacity: 0;
+}
+
+/* --- library hierarchy + search --- */
+
+.home-hero-cat {
+  padding-top: 12vh;
+}
+
+.home-hero .back-link {
+  position: static;
+  display: inline-block;
+  margin-bottom: 28px;
+}
+
+.home-search {
+  margin-top: 34px;
+  width: min(440px, 90%);
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  outline: none;
+  transition: border-color 0.25s;
+}
+
+.home-search:focus {
+  border-color: #6ea8ff;
+}
+
+.home-section {
+  padding-bottom: 2vh;
+}
+
+.home-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto 18px;
+  padding: 0 4px;
+  font-size: 15px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.home-section-head a {
+  color: var(--accent, var(--text));
+  text-decoration: none;
+}
+
+.home-section-head a[href]:hover {
+  text-decoration: underline;
+}
+
+.home-section-head span {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+}
+
+.home-section .home-grid {
+  padding-bottom: 4vh;
+}
+
+.ex-folder h2::after {
+  content: ' →';
+  color: var(--accent);
+}
+
+/* ================= player ================= */
+
+/* The whole overlay stack ignores the pointer by default so drags land on
+   the canvas (drag-to-orbit works on every step); interactive islands
+   (panels, links, rail dots) opt back in below. */
+.player {
+  position: relative;
+  pointer-events: none;
+}
+
+.canvas-holder {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: auto;
+}
+
+.canvas-holder canvas {
+  display: block;
+}
+
+/* --- CSS2D part callouts (dot + leader line + text pill) --- */
+
+.callout {
+  pointer-events: none;
+  user-select: none;
+}
+
+.callout::before {
+  content: '';
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent, #8fd3ff);
+  box-shadow: 0 0 8px var(--accent, #8fd3ff);
+}
+
+.callout-line {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 1px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(232, 234, 240, 0.75), rgba(232, 234, 240, 0.15));
+}
+
+.callout-text {
+  position: absolute;
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px 9px;
+  backdrop-filter: blur(8px);
+}
+
+.back-link {
+  position: fixed;
+  top: 24px;
+  left: 28px;
+  z-index: 3;
+  pointer-events: auto;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+}
+
+.back-link:hover {
+  color: var(--text);
+}
+
+.scroll-hint {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rail {
+  position: fixed;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0;
+}
+
+.rail-dot {
+  pointer-events: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.25s, border-color 0.25s, transform 0.25s;
+}
+
+.rail-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.35);
+}
+
+.player-hero {
+  position: relative;
+  z-index: 1;
+  min-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8vw;
+  max-width: 900px;
+  pointer-events: none;
+}
+
+.hero-kicker {
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0;
+}
+
+.player-hero h1 {
+  font-size: clamp(34px, 5.5vw, 64px);
+  font-weight: 800;
+  line-height: 1.08;
+  margin: 14px 0;
+  opacity: 0;
+}
+
+.hero-summary {
+  font-size: clamp(14px, 1.6vw, 17px);
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 520px;
+  opacity: 0;
+}
+
+.steps {
+  position: relative;
+  z-index: 1;
+}
+
+.step {
+  min-height: 160vh;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 6vw;
+  pointer-events: none;
+}
+
+.panel {
+  width: min(400px, 84vw);
+  padding: 26px 30px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  opacity: 0.35;
+  transition: opacity 0.4s, border-color 0.4s;
+  pointer-events: auto;
+}
+
+.panel.active {
+  opacity: 1;
+  border-color: var(--accent);
+}
+
+.panel-num {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+}
+
+.panel h2 {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 8px 0 10px;
+}
+
+.panel p {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.panel-hint {
+  margin-top: 12px;
+  font-size: 12px !important;
+  letter-spacing: 0.08em;
+  color: var(--accent) !important;
+  text-transform: uppercase;
+}
+
+@media (max-width: 720px) {
+  .step {
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 8vh;
+  }
+
+  .panel {
+    width: 92vw;
+    padding: 18px 20px;
+  }
+
+  .panel h2 {
+    font-size: 20px;
+  }
+
+  .rail {
+    right: 12px;
+  }
+
+  .player-hero {
+    padding: 0 24px;
+  }
+}

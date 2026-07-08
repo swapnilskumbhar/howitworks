@@ -1,0 +1,54 @@
+// The folder tree of the library. Categories are VIEWS over explainer
+// metadata, not containers: an explainer lists every category it belongs to
+// in its meta.js `categories` array (the AC is a car system AND a home
+// appliance), and appears in each. `parent` nests a category under another
+// to any depth (e.g. car under vehicles).
+export const categories = {
+  vehicles: {
+    title: 'Vehicles',
+    blurb: 'Engines, turbines and everything that moves you.',
+    accent: '#ff8f5e',
+  },
+  home: {
+    title: 'Around the Home',
+    blurb: 'The machines humming away in the background of your day.',
+    accent: '#8fd3ff',
+  },
+  precision: {
+    title: 'Precision Machines',
+    blurb: 'Small mechanisms doing exact work.',
+    accent: '#e0b34a',
+  },
+};
+
+export function isCategory(id) {
+  return Object.hasOwn(categories, id);
+}
+
+export function childrenOf(id) {
+  return Object.entries(categories)
+    .filter(([, c]) => c.parent === id)
+    .map(([cid, c]) => ({ id: cid, ...c }));
+}
+
+export function topLevel() {
+  return Object.entries(categories)
+    .filter(([, c]) => !c.parent)
+    .map(([cid, c]) => ({ id: cid, ...c }));
+}
+
+// A category contains an explainer if the meta lists it or any descendant.
+export function itemsIn(id, metas) {
+  const ids = new Set([id]);
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const [cid, c] of Object.entries(categories)) {
+      if (c.parent && ids.has(c.parent) && !ids.has(cid)) {
+        ids.add(cid);
+        grew = true;
+      }
+    }
+  }
+  return metas.filter((m) => (m.categories ?? []).some((c) => ids.has(c)));
+}

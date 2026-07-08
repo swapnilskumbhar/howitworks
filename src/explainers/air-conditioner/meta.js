@@ -1,0 +1,8 @@
+export default {
+  id: 'air-conditioner',
+  title: 'How an Air Conditioner Works',
+  summary:
+    'One loop of refrigerant, endlessly boiling and condensing — how a split AC carries heat out of your room and dumps it outside.',
+  accent: '#4fb0ff',
+  categories: ['home'],
+};
