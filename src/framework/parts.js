@@ -156,6 +156,46 @@ export function pulse(mesh, color = 0x6ea8ff) {
   });
 }
 
+// A queue of small glowing dots riding a curve (anything with getPointAt(t)
+// in 0..1 — tubeAlong()'s userData.curve, chainPath(), a plain
+// CatmullRomCurve3), for visualizing charge/current queuing along a wire:
+// capacitor leads charging, current building in an inductor/transformer
+// winding. `setFront(front)` places `count` dots trailing behind a leading
+// edge at `front` (0..1 along the curve), each spaced `spacing` behind the
+// last and fading in as it enters the curve — so a single scalar sweeping
+// 0→1→0 reads as charge arriving then draining, no continuous animation
+// loop required. Reverse direction (drain) just sweeps front back down.
+export function chargeQueue(curve, count = 6, color = 0x6ea8ff, opts = {}) {
+  const { size = 0.022, spacing = 0.09 } = opts;
+  const geo = new THREE.SphereGeometry(size, 10, 8);
+  const group = new THREE.Group();
+  const dots = [];
+  for (let i = 0; i < count; i++) {
+    const mat = materials.glow(color, 1.5);
+    mat.transparent = true;
+    mat.opacity = 0;
+    mat.depthWrite = false;
+    const dot = new THREE.Mesh(geo, mat);
+    group.add(dot);
+    dots.push(dot);
+  }
+  function setFront(front, visible = true) {
+    dots.forEach((dot, i) => {
+      const t = front - i * spacing;
+      if (!visible || t <= 0.001) {
+        dot.material.opacity = 0;
+        return;
+      }
+      const tc = Math.min(1, t);
+      const p = curve.getPointAt(tc);
+      dot.position.copy(p);
+      dot.material.opacity = Math.min(1, t * 8) * (1 - (i / count) * 0.2);
+    });
+  }
+  setFront(0);
+  return { group, dots, setFront };
+}
+
 // Floating text label rendered onto a canvas sprite.
 export function label(text, { color = '#e8eaf0', size = 0.5 } = {}) {
   const canvas = document.createElement('canvas');

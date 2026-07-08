@@ -275,6 +275,78 @@ export function chainPath(segments, { tension = 0.25 } = {}) {
   };
 }
 
+// A ribbon strip that morphs between "wound into a spiral" (base pose) and
+// "laid flat/straight" (morph target 1). For anything real-world wound vs.
+// straight — a rolled capacitor foil, an inductor/transformer winding peeled
+// straight to show its true length. Spiral winds around the local Y axis
+// (the roll axis); ribbon "width" runs along Y in both poses, "length" runs
+// around the spiral / along +X when flat. Drive with
+// `mesh.morphTargetInfluences[0] = t` (0 = wound, 1 = fully flat).
+export function windableRibbon(
+  {
+    length = 5,
+    width = 0.3,
+    turns = 3,
+    radiusStart = 0.16,
+    pitch = 0.11,
+    lengthSegments = 120,
+    widthSegments = 1,
+  },
+  material,
+) {
+  const wSeg = widthSegments;
+  const lSeg = lengthSegments;
+  const woundPos = [];
+  const flatPos = [];
+  const uvs = [];
+  for (let li = 0; li <= lSeg; li++) {
+    const u = li / lSeg;
+    const angle = u * turns * Math.PI * 2;
+    const r = radiusStart + pitch * (angle / (Math.PI * 2));
+    const wx = Math.cos(angle) * r;
+    const wz = Math.sin(angle) * r;
+    const flatX = (u - 0.5) * length;
+    for (let wi = 0; wi <= wSeg; wi++) {
+      const v = wi / wSeg;
+      const y = (v - 0.5) * width;
+      woundPos.push(wx, y, wz);
+      flatPos.push(flatX, y, 0);
+      uvs.push(u, v);
+    }
+  }
+  const row = wSeg + 1;
+  const idx = [];
+  for (let li = 0; li < lSeg; li++) {
+    for (let wi = 0; wi < wSeg; wi++) {
+      const a = li * row + wi;
+      idx.push(a, a + 1, a + row, a + 1, a + row + 1, a + row);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(woundPos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+
+  // Morph target: same topology, flat-pose positions + their own normals so
+  // lighting stays correct partway through the unroll, not just at the ends.
+  const flatGeo = new THREE.BufferGeometry();
+  flatGeo.setAttribute('position', new THREE.Float32BufferAttribute(flatPos, 3));
+  flatGeo.setIndex(idx);
+  flatGeo.computeVertexNormals();
+  const flatPosAttr = new THREE.Float32BufferAttribute(flatPos, 3);
+  flatPosAttr.name = 'flat';
+  geo.morphAttributes.position = [flatPosAttr];
+  geo.morphAttributes.normal = [flatGeo.getAttribute('normal')];
+
+  material.side = THREE.DoubleSide;
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.castShadow = true;
+  mesh.updateMorphTargets();
+  mesh.morphTargetInfluences[0] = 0; // start fully wound
+  return mesh;
+}
+
 // Ring of hex bolt heads in the local XZ plane (a flange seen from +Y).
 export function boltCircle(count, circleR, boltR, material, boltH = 0.03) {
   const g = new THREE.Group();
