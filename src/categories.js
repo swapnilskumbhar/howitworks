@@ -19,6 +19,16 @@ export const categories = {
     blurb: 'Small mechanisms doing exact work.',
     accent: '#e0b34a',
   },
+  electronics: {
+    title: 'Electronics',
+    blurb: 'The handful of components hiding inside every circuit.',
+    accent: '#b28dff',
+  },
+  power: {
+    title: 'Power & the Grid',
+    blurb: 'How electricity is made, stepped up, and carried to your wall.',
+    accent: '#54c8e8',
+  },
 };
 
 export function isCategory(id) {
