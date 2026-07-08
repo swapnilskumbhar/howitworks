@@ -347,6 +347,69 @@ export function windableRibbon(
   return mesh;
 }
 
+// Loft of same-point-count horizontal rings ("levels" = [{y, points:[[x,z],
+// ...]}]) into one smooth watertight solid, y increasing +Y. A ring's point
+// list need not trace a FULL loop: if it only sweeps part of a circle (e.g.
+// a semicircle for a D-shaped cross-section), the implicit closing edge (last
+// point -> first point, wrapping via modulo) becomes a genuine FLAT FACE —
+// exactly a TO-92 transistor package's flat front on an otherwise round body.
+// Shrinking a ring's radius toward ~0 pinches the loft to a point, a free
+// rounded dome cap with no separate mesh (see transistor/model.js for both).
+export function radialLoft(levels, material, opts = {}) {
+  const { capBottom = true, capTop = false } = opts;
+  const n = levels[0].points.length;
+  const pos = [];
+  const uvs = [];
+  const idx = [];
+  levels.forEach((lvl, li) => {
+    lvl.points.forEach(([x, z], pi) => {
+      pos.push(x, lvl.y, z);
+      uvs.push(pi / (n - 1), li / (levels.length - 1));
+    });
+  });
+  for (let li = 0; li < levels.length - 1; li++) {
+    for (let pi = 0; pi < n; pi++) {
+      const piN = (pi + 1) % n;
+      const a = li * n + pi;
+      const b = li * n + piN;
+      const c = (li + 1) * n + pi;
+      const d = (li + 1) * n + piN;
+      idx.push(a, c, b, b, c, d);
+    }
+  }
+  function cap(li, flip) {
+    const lvl = levels[li];
+    let cx = 0;
+    let cz = 0;
+    for (const [x, z] of lvl.points) {
+      cx += x;
+      cz += z;
+    }
+    cx /= n;
+    cz /= n;
+    const centerIdx = pos.length / 3;
+    pos.push(cx, lvl.y, cz);
+    uvs.push(0.5, 0.5);
+    for (let pi = 0; pi < n; pi++) {
+      const piN = (pi + 1) % n;
+      const a = li * n + pi;
+      const b = li * n + piN;
+      if (flip) idx.push(centerIdx, a, b);
+      else idx.push(centerIdx, b, a);
+    }
+  }
+  if (capBottom) cap(0, true);
+  if (capTop) cap(levels.length - 1, false);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.castShadow = true;
+  return mesh;
+}
+
 // Ring of hex bolt heads in the local XZ plane (a flange seen from +Y).
 export function boltCircle(count, circleR, boltR, material, boltH = 0.03) {
   const g = new THREE.Group();
