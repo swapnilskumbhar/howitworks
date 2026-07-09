@@ -410,6 +410,77 @@ export function radialLoft(levels, material, opts = {}) {
   return mesh;
 }
 
+// Wound-wire coil: a tube following a helical path, generic enough for a
+// straight-axis solenoid (inductor bobbin, voice coil, transformer primary)
+// OR a toroid winding (donut-core inductor/transformer — wire looping
+// through the hole while advancing around the ring). Axis convention matches
+// the rest of the toolkit's Y-up parts: solenoid axis is +Y; toroid "hole"
+// axis is also +Y (rotate a THREE.TorusGeometry core by `rotation.x =
+// Math.PI/2` to match).
+//
+// Returns { mesh, curve, points } — `points` is the raw [x,y,z] sample list
+// (feed it straight to chainSegments()-style helpers or a lead-wire tube),
+// `curve` is the CatmullRomCurve3 used to build the tube (has getPointAt /
+// getTangentAt for riding a chargeQueue/flow-dot stream along the wire), and
+// `mesh.userData.curve` mirrors it for the tubeAlong() calling convention.
+//
+// toroidal:false (default) → solenoid: `turns` loops of `radius`, stacked
+//   along +Y over `length`, i.e. a standard wound bobbin.
+// toroidal:true → `radius` becomes the wire loop's MINOR radius (how far the
+//   winding sits out from the core's center-line) and `majorRadius` is the
+//   donut's big radius. The path sweeps the minor angle `turns` times while
+//   the major angle sweeps exactly one full turn — the same construction as
+//   a real toroidal choke: N evenly-spaced loops threading the hole, wire
+//   ends exposed near the same azimuth (NOT a closed loop — leave
+//   `closed:false`, the default, so both ends are real exposed leads).
+export function coil(
+  {
+    turns = 8,
+    radius = 0.15,
+    length = 1,
+    wireRadius = 0.02,
+    segmentsPerTurn = 24,
+    toroidal = false,
+    majorRadius = 0.6,
+    majorSpan = Math.PI * 2,
+    phase = 0,
+    closed = false,
+  },
+  material,
+) {
+  const totalSegs = Math.max(8, Math.round(turns * segmentsPerTurn));
+  const points = [];
+  for (let i = 0; i <= totalSegs; i++) {
+    const u = i / totalSegs;
+    if (toroidal) {
+      const majorAngle = u * majorSpan + phase;
+      const minorAngle = u * turns * Math.PI * 2;
+      const rr = majorRadius + radius * Math.cos(minorAngle);
+      points.push([
+        Math.cos(majorAngle) * rr,
+        radius * Math.sin(minorAngle),
+        Math.sin(majorAngle) * rr,
+      ]);
+    } else {
+      const angle = u * turns * Math.PI * 2 + phase;
+      points.push([Math.cos(angle) * radius, -length / 2 + u * length, Math.sin(angle) * radius]);
+    }
+  }
+  const curve = new THREE.CatmullRomCurve3(
+    points.map((p) => new THREE.Vector3(...p)),
+    closed,
+    'catmullrom',
+    0.4,
+  );
+  const mesh = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, totalSegs, wireRadius, 8, closed),
+    material,
+  );
+  mesh.castShadow = true;
+  mesh.userData.curve = curve;
+  return { mesh, curve, points };
+}
+
 // Ring of hex bolt heads in the local XZ plane (a flange seen from +Y).
 export function boltCircle(count, circleR, boltR, material, boltH = 0.03) {
   const g = new THREE.Group();
