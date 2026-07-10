@@ -45,6 +45,18 @@ context, say so and recommend a fresh-context review instead.
 
 ## Rubric (every item traces to a real caught defect)
 
+**Proportions — THE #1 thing, check it FIRST (user's words).** A
+proportionally-wrong model reads as a toy no matter how detailed or well-lit,
+and it is the defect the user notices first and is most annoyed to find. Open
+a reference image of the real object and compare the SILHOUETTE and the major
+dimension ratios directly: overall length:height, and the size of each big
+part relative to the others (on a pistol: slide length ≈ 1.35 × total height,
+grip ≈ 0.6 × slide length, bore a slim fraction of slide width). A stretched,
+squashed, or "one part twice the size it should be" model is an automatic FIX
+even if everything else is perfect — call it out with the specific ratio that's
+off and roughly what it should be. (Shipped wrong twice: a pistol slide ~1.8×
+too long reading as an SMG; the watch dinner-plate-sized next to its stand.)
+
 **Correctness**
 - Mechanism numbers match YOUR research, not the builder's notes (a 16-tooth
   escape wheel shipped once; canonical is 15).
@@ -60,6 +72,38 @@ context, say so and recommend a fresh-context review instead.
   to camera; parts floating without support/attachment; z-fighting shimmer.
 - Proportion sanity vs reference (the watch first rendered dinner-plate
   sized next to its stand). Compare relative sizes, not absolutes.
+
+**Reveal / cutaway integrity (any explainer with a `setReveal`/x-ray layer)**
+- **Every internal part named in a label or the step copy must ACTUALLY be
+  visible when revealed** — not buried inside opaque geometry, not occluded by
+  a frame member, not the same colour as what's behind it. Toggle reveal and
+  find each named internal part on screen with your eyes; a "Recoil spring"
+  label pointing at a spring hidden inside the frame rail is a FIX. (Shipped: a
+  recoil spring embedded in the frame so it never showed in the x-ray.)
+- Openings read as openings: a muzzle, port, nozzle, or intake that is hollow
+  in reality must show a HOLE/dark recess, not a solid cap. (Shipped: a pistol
+  muzzle capped with a solid disc — "the muzzle should be empty".)
+- Solid step (reveal 0) shows a believable finished object with NO internals
+  leaking (no floating brass/parts); revealed steps hide the outer shell enough
+  to see in. Scroll back to a solid step after a revealed one and confirm state
+  is consistent.
+
+**Named parts are present AND unoccluded ("proportions, then placement")**
+- Every part named in a step's copy or its labels must be findable on screen at
+  that step. If step 3 is "Pulling the trigger", the trigger must be visible and
+  legible in frame — not a 3px sliver, not behind the panel. (Shipped: "Where is
+  the trigger?" — it was there but too small to find.)
+- Right-sized is not enough — check the part is actually UNOCCLUDED from that
+  step's camera, not buried behind a neighbouring part. (Shipped: the trigger
+  sat at the same depth as the grip, which hid it from every front angle — a
+  placement bug, not a proportion bug. Placement is second only to proportions.)
+
+**State hygiene (transient/consumable parts)**
+- No stale duplicates: anything that represents a moving/consumable state (a
+  chambered round that ejects, a spark, a fluid packet) must appear only during
+  its phase. Scrub the loop (`rt.tl.seek`) or compare a/b frames through the
+  fired/ejected window and confirm you never see two copies at once. (Shipped: a
+  chambered case stayed in the bore while its ejected copy flew out — two brass.)
 
 **Materials & light**
 - Blown-white specular streaks (truly clipped) — bright silver is fine,

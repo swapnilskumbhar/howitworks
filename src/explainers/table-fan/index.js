@@ -20,6 +20,7 @@ export default defineExplainer({
       body: 'A desk fan is just four systems: a weighted base, an electric motor in the head, three pitched blades on the motor shaft, and a wire guard so you keep your fingers. The copper ring inside the housing is the stator — the electromagnet that does all the work.',
       hint: 'Drag to orbit · scroll to dig in.',
       camera: { position: [2.6, 2.2, 4.2], target: [0, 1.3, 0] },
+      onEnter: ({ handles }) => handles.setLabels(true),
       timeline: ({ tl, handles }) => {
         const s = { t: 0 };
         tl.add(s, {
@@ -36,6 +37,7 @@ export default defineExplainer({
       heading: 'The motor spins',
       body: 'Alternating current in the stator coils creates a rotating magnetic field. The rotor chases that field, dragging the shaft — and the blades bolted to it — around with it, about 20 times every second.',
       camera: { position: [1.6, 1.8, -3.6], target: [0, 1.5, -0.2] },
+      onEnter: ({ handles }) => handles.setLabels(false),
       timeline: ({ tl, handles }) => {
         const s = { t: 0 };
         tl.add(s, {
@@ -52,6 +54,7 @@ export default defineExplainer({
       heading: 'Blades push the air',
       body: 'Each blade is tilted like a boat propeller. As it sweeps around, its angled face shoves air backward-to-forward, carving a moving column of air out in front of the fan. More tilt or more speed means more breeze.',
       camera: { position: [0.4, 1.6, 4.6], target: [0, 1.4, 0.6] },
+      onEnter: ({ handles }) => handles.setLabels(false),
       timeline: ({ tl, handles }) => {
         const s = { t: 0 };
         tl.add(s, {
@@ -75,6 +78,7 @@ export default defineExplainer({
       hint: 'Drag to orbit while it runs.',
       camera: { position: [3.4, 2.6, 4.4], target: [0, 1.4, 0] },
       freeOrbit: true,
+      onEnter: ({ handles }) => handles.setLabels(false),
       timeline: ({ tl, handles }) => {
         const s = { t: 0 };
         tl.add(s, {

@@ -46,6 +46,24 @@ it takes. Two principles from experience:
   stand, plinth). NEVER stylized human anatomy (arm/hand/wrist) — a cartoon
   body part next to a realistic machine makes the whole scene read as a toy.
   Tried three times on the watch; user killed it each round.
+- **Open on the COMPLETE, SOLID product — never a skeleton.** Step 1 must be
+  the finished object as you'd actually see it: opaque outer shell, no guts
+  showing. THEN, as the user scrolls, make the shell go transparent / ghost
+  to x-ray (or lift a "dress" layer) and reveal the mechanism inside. Starting
+  already-exploded or already-cut-away (an opaque slide sitting next to a
+  translucent frame with the springs on show) reads as a wireframe/skeleton
+  and kills the "whoa, it's a real thing" hook — the user has rejected this
+  explicitly. Build the outer skin on its own material(s), expose a
+  `setReveal(t)` handle, pin `reveal` in every step's `onEnter` (0 = solid,
+  1 = revealed), and re-solidify near the end (the "run it" finale can
+  fire/spin the complete object again), mirroring the watch's re-dress.
+  **METAL CAN'T BE GHOSTED** — transparent metal still reads as a solid surface
+  (specular/env reflections dominate) and buries the mechanism. So on reveal,
+  HIDE metal shell parts outright (`.visible=false` — lift the lid off), and
+  only fade LOW-SPECULAR polymer/plastic to a faint (~0.26) translucent body
+  for context. And any real opening (muzzle, port, nozzle, intake) must be an
+  ACTUAL hole — extrude the front face as a plate with a circular `Path` hole,
+  never a solid disc the moving part would pass through.
 - **Real mechanisms, real numbers.** If you are not POSITIVE how the mechanism
   works or looks, research it on the internet BEFORE building (WebSearch +
   WebFetch a canonical source — e.g. ciechanow.ski has definitive interactive
@@ -54,6 +72,37 @@ it takes. Two principles from experience:
   balance diameter), colors (mainspring grey, HAIRspring blued), motion (a
   mainspring's coils migrate arbor→wall as it unwinds). Viewers who know the
   machine will notice.
+
+- **Proportions are the single most important thing — get them right BEFORE
+  any detail.** A model with perfect materials, greebles and lighting still
+  reads as a cheap toy if the big dimensions are wrong; proportions are the
+  first thing a viewer (and the user) judges. Before building, pull a reference
+  image and read off the major RATIOS (overall length:height, and each big
+  part's size relative to the others — e.g. a pistol slide ≈ 1.35 × total
+  height, grip ≈ 0.6 × slide length, bore a slim fraction of slide width).
+  Derive EVERY constant in model.js from ONE consistent scale so those ratios
+  hold by construction, and add a short comment block stating the target ratios
+  (see semi-auto-pistol). After the first render, compare the silhouette to the
+  reference and fix proportion mismatches before touching anything else — a
+  stretched or mis-scaled part is the defect the user notices first and the one
+  they are most frustrated to find late. (A pistol shipped with a slide ~1.8×
+  too long, reading as an SMG; the watch first rendered dinner-plate-sized.)
+- **Placement is second only to proportions ("proportions, then placement").**
+  Right-sized parts in the wrong place still fail: a part is worthless if it is
+  buried behind another part from the step's camera. After proportions, verify
+  every named part is actually UNOCCLUDED and legible from the camera that
+  features it — position it in the open, not tucked behind a neighbour. (The
+  pistol trigger was correctly modelled but sat at the same depth as the grip,
+  which hid it from every front angle; moving it forward into the open trigger
+  guard fixed it.) A part the copy names but the viewer can't find reads as a
+  bug, not a subtlety.
+- **State hygiene: one thing, one place, one time.** Anything that represents a
+  consumable or moving state — a chambered round that later ejects, a spark, a
+  flame front, a packet of fluid — must be shown ONLY during its phase and
+  hidden otherwise. Never leave a stale copy behind: if a round becomes the
+  ejected case, the chambered case must disappear the instant ejection starts,
+  or the viewer sees two brass in the bore at once. Drive these visibilities
+  from the same scalar as the motion (`mesh.visible = revealed && phaseWindow`).
 
 The premium-fidelity upgrade ladder (anisotropy, transmission glass,
 imperfection maps, depth of field) lives in the separate **polish-explainer**
@@ -83,11 +132,16 @@ new; build first, polish as its own pass.
    needs. Two proven shapes:
    - *Anatomy-first*: step 1 "The anatomy" (overview, callout labels on, slow
      loop), then one mechanism per step, last step `freeOrbit: true` fast.
-   - *Zoom-in* (watch): step 1 the finished product from outside, then peel a
-     layer per step (`setDress(false)`-style toggles), go mechanism by
-     mechanism, re-dress near the end, finish freeOrbit. Every step's
-     `onEnter` must PIN the full layer/label state (helper
-     `view(dress, labels)`) so scrolling backwards is consistent.
+   - *Zoom-in / reveal* (watch, pistol): step 1 the finished product SOLID
+     from outside, then a "look inside" step ghosts the shell (`setReveal(1)`)
+     / peels a layer, then go mechanism by mechanism, re-solidify near the end,
+     finish freeOrbit. Every step's `onEnter` must PIN the full reveal/layer/
+     label state (helper `view(reveal, labels)`) so scrolling backwards is
+     consistent. THIS IS THE PREFERRED SHAPE for anything with a real outer
+     shell (engines, guns, appliances, watches) — see the "open on the
+     complete, solid product" principle above. Pure anatomy-first (open
+     already-cut-away) is only for things that have no meaningful "skin" (a
+     bare circuit component, an exposed gear train).
    In all steps the CAMERA provides the focus; the machine just keeps running.
 3. **Write `meta.js`** (id = folder name, categories from `src/categories.js`
    — add a new category there if none fits), then **build `model.js`**:

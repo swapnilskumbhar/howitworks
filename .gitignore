@@ -1,5 +1,7 @@
 node_modules/
 dist/
 review-shots/
+renders/
+renders-smoke/
 *.log
 .DS_Store

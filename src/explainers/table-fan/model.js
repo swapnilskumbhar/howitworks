@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { materials, rod, box, disc, arrow } from '../../framework/parts.js';
+import { callout } from '../../framework/labels.js';
 
 // A desk fan: weighted base, stand, motor head that can yaw (oscillate),
 // rotor shaft spinning three tilted blades inside a wire guard.
@@ -99,6 +100,24 @@ export function buildFan({ scene }) {
   }
   head.add(airflow);
 
+  // --- callout labels ---------------------------------------------------------
+  // Static ones live in a group parented to the head so they ride the yaw; the
+  // blade label hangs off the rotor hub so its dot rides the spinning rotor.
+  const callouts = [];
+  const addCallout = (parent, text, pos, dir, len) => {
+    const c = callout(text, { dir, len });
+    c.position.set(...pos);
+    c.visible = false;
+    parent.add(c);
+    callouts.push(c);
+    return c;
+  };
+  addCallout(head, 'Motor housing', [0, 0.36, -0.28], 120, 66);
+  addCallout(head, 'Wire guard', [0.82, 0, 0.28], 20, 56);
+  addCallout(hub, 'Pitched blades', [0, 0.42, 0], 60, 60);
+  addCallout(head, 'Oscillating head', [0.2, -0.2, -0.1], -45, 72);
+  addCallout(group, 'Weighted base', [0.85, 0.1, 0], -25, 60);
+
   const state = { spin: 0, flow: 0, yaw: 0, airOn: false };
 
   function apply() {
@@ -121,6 +140,9 @@ export function buildFan({ scene }) {
     set(partial) {
       Object.assign(state, partial);
       apply();
+    },
+    setLabels(visible) {
+      for (const c of callouts) c.visible = visible;
     },
   };
 }

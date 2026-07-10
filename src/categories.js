@@ -29,6 +29,11 @@ export const categories = {
     blurb: 'How electricity is made, stepped up, and carried to your wall.',
     accent: '#54c8e8',
   },
+  communications: {
+    title: 'Communications',
+    blurb: 'How voices, signals and data race across the world in milliseconds.',
+    accent: '#6ec8ff',
+  },
 };
 
 export function isCategory(id) {

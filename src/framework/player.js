@@ -84,13 +84,20 @@ export function mountExplainer(def, container) {
   }
 
   window.__hiw.stepRuntimes = stepRuntimes;
+  window.__hiw.activate = (i) => activate(i); // deterministic driving for video export
 
   // --- step activation (camera, rail, panels, loop start/stop) -----------
   let activeIndex = -1;
 
   function flyTo({ position, target }) {
+    // video export sets __hiwCameraScale > 1 for portrait renders: dolly the
+    // camera out along the view axis so landscape-framed shots still fit.
+    // A bare global (not on __hiw) so the export can set it via addInitScript,
+    // before boot's first fly-to runs.
+    const s = window.__hiwCameraScale ?? 1;
+    const p = s === 1 ? position : position.map((v, k) => target[k] + (v - target[k]) * s);
     animate(stage.camera.position, {
-      x: position[0], y: position[1], z: position[2],
+      x: p[0], y: p[1], z: p[2],
       duration: 1300,
       ease: 'inOutQuad',
     });
