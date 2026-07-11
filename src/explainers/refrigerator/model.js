@@ -205,8 +205,10 @@ export function buildRefrigerator({ scene }) {
   group.add(wires);
 
   // filter drier: small vertical cylinder at bottom right of the grid
-  const drierPos = new THREE.Vector3(0.48, 0.52, ZB - 0.04);
-  const drier = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.2, 16), materials.brushedSteel());
+  const drierPos = new THREE.Vector3(0.4, 0.52, ZC + 0.02);
+  const drierMat = materials.brushedSteel(0x99a1a9);
+  drierMat.roughness = 0.82; // matte — a clipped specular blob shipped here once
+  const drier = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.16, 6, 16), drierMat);
   drier.castShadow = true;
   drier.position.copy(drierPos);
   group.add(drier);
@@ -214,7 +216,7 @@ export function buildRefrigerator({ scene }) {
   // --- evaporator: fin pack behind the freezer's back liner, with a fan ----------
   const EZ = ZB + 0.055; // between liner back wall and back board
   const EY0 = DIV_Y + 0.18;
-  const EY1 = H - 0.28;
+  const EY1 = EY0 + 0.23;
   const evapFins = new THREE.Group();
   for (let i = 0; i < 30; i++) {
     const fin = box(0.014, EY1 - EY0 + 0.1, 0.075, alumFin);
@@ -226,56 +228,62 @@ export function buildRefrigerator({ scene }) {
     { blades: 5, hubR: 0.035, span: 0.11, chord: 0.09, chordTip: 0.1, camber: 0.1, twist: 0.85, twistTip: 0.4, hubDepth: 0.05 },
     materials.plastic(0x39424c),
   );
-  fan.group.position.set(0, H - 0.17, EZ + 0.02);
+  fan.group.position.set(0, (EY0 + EY1) / 2, EZ + 0.1);
   group.add(fan.group);
-  const shroud = new THREE.Mesh(new THREE.TorusGeometry(0.155, 0.016, 10, 36), dark);
+  const shroud = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.016, 10, 36), dark);
   shroud.position.copy(fan.group.position);
   group.add(shroud);
 
   // ============================ REFRIGERANT CIRCUIT ================================
-  const capC = [0.56, 0.35, ZB + 0.05]; // capillary helix center, beside the drier
-  const capPts = [[drierPos.x, drierPos.y - 0.12, drierPos.z], [capC[0], 0.5, capC[2]]];
+  // capillary helix: tucked in the machine bay beside the compressor, safely
+  // inside the cabinet footprint (half-width 0.46)
+  const capC = [0.36, 0, ZB - 0.04];
+  const capPts = [[drierPos.x, drierPos.y - 0.12, drierPos.z], [capC[0], 0.48, capC[2]]];
   for (let k = 0; k <= 20; k++) {
     const a = (k / 20) * Math.PI * 10;
-    capPts.push([capC[0] + 0.07 * Math.cos(a), 0.5 - (k / 20) * 0.28, capC[2] + 0.07 * Math.sin(a)]);
+    capPts.push([capC[0] + 0.07 * Math.cos(a), 0.48 - (k / 20) * 0.26, capC[2] + 0.07 * Math.sin(a)]);
   }
   const capEnd = capPts[capPts.length - 1];
+  const dy = (EY1 - EY0) / 4; // evaporator pass spacing (5 passes fill the fins)
 
   const segments = [
     // 0 · compressor discharge -> up the right side of the back to the top pass
     [
       [compTop.x, compTop.y, compTop.z],
-      [0.42, 0.62, ZC + 0.02],
-      [0.48, 1.4, ZC],
-      [0.48, passYs[8], ZC],
+      [0.36, 0.68, ZC + 0.02],
+      [0.42, 1.5, ZC],
+      [0.42, passYs[8], ZC],
       [CX, passYs[8], ZC],
     ],
     // 1 · condenser serpentine, top -> bottom (liquid drains downward)
     condPts,
     // 2 · bottom pass exit -> filter drier
-    [condEnd, [0.46, condEnd[1] - 0.06, ZC + 0.02], [drierPos.x, drierPos.y + 0.12, drierPos.z]],
+    [condEnd, [drierPos.x, condEnd[1] - 0.04, ZC], [drierPos.x, drierPos.y + 0.12, drierPos.z]],
     // 3 · capillary tube: hair-thin helix
     capPts,
-    // 4 · liquid line: up the left side inside the back wall to the evaporator
+    // 4 · liquid line: across the bay, then up the LEFT side to the evaporator
     [
       capEnd,
-      [0.5, 0.7, ZB + 0.05],
-      [0.44, 1.6, ZB + 0.05],
-      [0.36, EY0 - 0.06, EZ],
-      [0.3, EY0, EZ],
+      [-0.2, 0.3, ZB - 0.04],
+      [-0.4, 0.5, ZB - 0.03],
+      [-0.42, 1.6, ZB - 0.03],
+      [-0.36, EY0 - 0.06, EZ],
+      [-0.3, EY0, EZ],
     ],
-    // 5 · evaporator serpentine (5 passes up the fin pack)
+    // 5 · evaporator serpentine: 5 passes up the fin pack, exiting right
     [
-      [0.3, EY0, EZ], [-0.3, EY0, EZ], [-0.37, EY0 + 0.075, EZ], [-0.3, EY0 + 0.15, EZ],
-      [0.3, EY0 + 0.15, EZ], [0.37, EY0 + 0.225, EZ], [0.3, EY0 + 0.3, EZ], [-0.3, EY0 + 0.3, EZ],
-      [-0.37, EY0 + 0.375, EZ], [-0.3, EY0 + 0.45, EZ], [0.3, EY0 + 0.45, EZ],
+      [-0.3, EY0, EZ], [0.3, EY0, EZ], [0.37, EY0 + dy / 2, EZ], [0.3, EY0 + dy, EZ],
+      [-0.3, EY0 + dy, EZ], [-0.37, EY0 + 1.5 * dy, EZ], [-0.3, EY0 + 2 * dy, EZ],
+      [0.3, EY0 + 2 * dy, EZ], [0.37, EY0 + 2.5 * dy, EZ], [0.3, EY0 + 3 * dy, EZ],
+      [-0.3, EY0 + 3 * dy, EZ], [-0.37, EY0 + 3.5 * dy, EZ], [-0.3, EY1, EZ],
+      [0.3, EY1, EZ],
     ],
     // 6 · fat suction line: out of the freezer, down the back to the compressor
     [
-      [0.3, EY0 + 0.45, EZ],
-      [0.42, EY0 + 0.3, ZB - 0.02],
-      [0.5, 1.3, ZB - 0.02],
-      [0.44, 0.62, ZB + 0.05],
+      [0.3, EY1, EZ],
+      [0.42, EY1 - 0.12, ZB - 0.02],
+      [0.42, 1.2, ZB - 0.02],
+      [0.38, 0.66, ZB + 0.02],
       [compTop.x, compTop.y, compTop.z],
     ],
   ];
@@ -353,12 +361,12 @@ export function buildRefrigerator({ scene }) {
     callouts.push(c);
   };
   addCallout('Freezer', [-0.3, H - 0.32, 0.1], 150, 56);
-  addCallout('Fresh-food compartment', [-0.34, BASE_Y + 1.1, 0.1], 175, 66);
-  addCallout('Evaporator coil + fan', [0.3, H - 0.35, EZ], 25, 64);
-  addCallout('Condenser coils', [-0.4, 1.7, ZC], -150, 60);
+  addCallout('Fresh-food compartment', [0.1, BASE_Y + 1.1, 0.1], -30, 66);
+  addCallout('Evaporator coil + fan', [0.32, EY1, EZ], 25, 64);
+  addCallout('Condenser coils', [-0.2, 1.75, ZC], -140, 60);
   addCallout('Compressor', [0.2, BASE_Y + 0.1, ZB + 0.2], -35, 60);
   addCallout('Filter drier', [drierPos.x + 0.04, drierPos.y, drierPos.z], 15, 52);
-  addCallout('Capillary tube', [capC[0] + 0.08, 0.32, capC[2]], -15, 56);
+  addCallout('Capillary tube', [capC[0] + 0.09, 0.36, capC[2]], -15, 56);
 
   // --- state / pose ------------------------------------------------------------------
   const state = { flow: 0, spin: 0, heatOut: 0, coldAir: 0 };
@@ -397,13 +405,16 @@ export function buildRefrigerator({ scene }) {
     const r = Math.min(1, Math.max(0, t));
     const solid = r < 0.5;
     for (const m of shellMeshes) m.visible = solid;
+    packets.visible = !solid; // glowing flow markers are diagram-ware, not product
+    heatG.visible = !solid;
+    coldG.visible = !solid;
     for (const mat of linerMats) {
-      mat.transparent = r > 0;
       mat.opacity = 1 - r * 0.74; // -> 0.26 at full reveal
-      mat.depthWrite = r === 0;
-      mat.needsUpdate = false;
+      mat.depthWrite = r < 0.5;
     }
   }
+  // transparent from the start so toggling opacity never needs a recompile
+  for (const mat of linerMats) mat.transparent = true;
   setReveal(0);
 
   return {
